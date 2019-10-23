@@ -133,12 +133,12 @@ bookmarkRouter
   */
   .delete((req, res, next) => {
     const { id } = req.params;
-    knexInstance = req.app.get("db");
+    const knexInstance = req.app.get("db");
 
     BookmarksService.deleteBookmark(knexInstance, id)
       .then(numRowsAffected => {
-        logger.info(`Bookmark with id ${id} deleted.`);
         res.status(204).end();
+        logger.info(`Bookmark with id ${id} deleted.`);
       })
       .catch(next);
 

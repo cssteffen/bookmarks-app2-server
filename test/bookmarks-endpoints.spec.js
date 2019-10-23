@@ -35,9 +35,9 @@ describe("Bookmarks Endpoints", function() {
       });
     });
 
-    describe.only("POST /bookmarks", () => {
+    describe("POST /bookmarks", () => {
       it("creates a bookmark, responding with 201 and the new bookmark", function() {
-        //this.retries(3);
+        this.retries(3);
 
         const testNewBookmark = {
           title: "Test new bookmark",
@@ -57,8 +57,8 @@ describe("Bookmarks Endpoints", function() {
             expect(res.body.description).to.eql(testNewBookmark.description);
             expect(res.body).to.have.property("id");
             expect(res.headers.location).to.eql(`/bookmarks/${res.body.id}`);
-            //const expected = new Date().toLocaleString();
-            //const actual = new Date(res.body.date_published).toLocaleString();
+            const expected = new Date().toLocaleString();
+            const actual = new Date(res.body.date_published).toLocaleString();
             //expect(actual).to.eql(expected);
           })
 
@@ -92,31 +92,102 @@ describe("Bookmarks Endpoints", function() {
         });
       });
 
-      /*
-    it("removes XSS attack content from response", () => {
-      const maliciousBookmark = {
-        id: 911,
-        title: 'Naughty naughty very naughty <script>alert("xss");</script>',
-        url: "http://www.malicious-Bookmark.com",
-        description:
-          'Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.'
-      };
-      return supertest(app)
-        .post("/bookmarks")
-        .set("Authorization", `Bearer ${process.env.API_KEY}`)
+      it("removes XSS attack content from response", () => {
+        const maliciousBookmark = {
+          id: 911,
+          title: 'Naughty naughty very naughty <script>alert("xss");</script>',
+          url: "http://www.malicious-Bookmark.com",
+          rating: 1,
+          description:
+            'Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.'
+        };
+        return supertest(app)
+          .post("/bookmarks")
+          .send(maliciousBookmark)
+          .set("Authorization", `Bearer ${process.env.API_KEY}`)
+          .expect(201)
+          .expect(res => {
+            expect(res.body.title).to.eql(
+              'Naughty naughty very naughty &lt;script&gt;alert("xss");&lt;/script&gt;'
+            );
+            expect(res.body.description).to.eql(
+              `Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`
+            );
+          });
+      });
 
-        .send(maliciousBookmark)
-        .expect(201)
-        .expect(res => {
-          expect(res.body.title).to.eql(
-            'Naughty naughty very naughty &lt;script&gt;alert("xss");&lt;/script&gt;'
-          );
-          expect(res.body.description).to.eql(
-            `Bad image <img src="https://url.to.file.which/does-not.exist">. But not <strong>all</strong> bad.`
-          );
+      /*
+      describe("DELETE /articles/:article_id", () => {
+        context("Given there are articles in the database", () => {
+          const testArticles = makeArticlesArray();
+
+          beforeEach("insert articles", () => {
+            return db.into("blogful_articles").insert(testArticles);
+          });
+
+          it("responds with 204 and removes the article", () => {
+            const idToRemove = 2;
+            const expectedArticles = testArticles.filter(
+              article => article.id !== idToRemove
+            );
+            return supertest(app)
+              .delete(`/articles/${idToRemove}`)
+              .expect(204)
+              .then(res =>
+                supertest(app)
+                  .get("/articles")
+                  .expect(expectedArticles)
+              );
+          });
         });
+
+        context("Given no articles", () => {
+          it("responds with 404", () => {
+            const articleId = 123456;
+            return supertest(app)
+              .delete(`/articles/${articleId}`)
+              .expect(404, { error: { message: `Article doesn't exist` } });
+          });
+        });
+      });
+
+*/
     });
-    */
+  });
+  describe("DELETE /bookmarks/:bookmark_id", () => {
+    context("Given there are bookmarks in the database", () => {
+      const testBookmarks = fixtures.makeBookmarksArray();
+
+      beforeEach("insert bookmarks", () => {
+        return db.into("bookmarks").insert(testBookmarks);
+      });
+
+      it("responds with 204 and removes the bookmark", () => {
+        const idToRemove = 2;
+        const expectedBookmarks = testBookmarks.filter(
+          bookmark => bookmark.id !== idToRemove
+        );
+        return supertest(app)
+          .delete(`/bookmarks/${idToRemove}`)
+          .set("Authorization", `Bearer ${process.env.API_KEY}`)
+          .expect(204)
+          .then(res =>
+            supertest(app)
+              .get("/bookmarks")
+              .set("Authorization", `Bearer ${process.env.API_KEY}`)
+              .expect(expectedBookmarks)
+          );
+      });
+    });
+
+    context("Given no bookmarks", () => {
+      it("responds with 404", () => {
+        const bookmarkId = 123456;
+        return supertest(app)
+          .delete(`/bookmarks/${bookmarkId}`)
+          .set("Authorization", `Bearer ${process.env.API_KEY}`)
+          .expect(404, { error: { message: `Bookmark Not Found` } });
+      });
     });
   });
   /* ========= GET /bookmarks/:id ========== */
