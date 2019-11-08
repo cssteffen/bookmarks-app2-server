@@ -137,8 +137,8 @@ bookmarkRouter
 
     BookmarksService.deleteBookmark(knexInstance, id)
       .then(numRowsAffected => {
-        res.status(204).end();
         logger.info(`Bookmark with id ${id} deleted.`);
+        res.status(204).end();
       })
       .catch(next);
 
